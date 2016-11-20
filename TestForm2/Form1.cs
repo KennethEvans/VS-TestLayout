@@ -19,10 +19,14 @@ namespace TestForm2 {
         }
 
         private void setHandlers() {
+            MouseEnter += new EventHandler(control_Enter);
+            MouseLeave += new EventHandler(control_Leave);
             foreach (Control control in this.Controls) {
                 control.MouseEnter += new EventHandler(control_Enter);
+                control.MouseLeave += new EventHandler(control_Leave);
                 foreach (Control control1 in control.Controls) {
                     control1.MouseEnter += new EventHandler(control_Enter);
+                    control1.MouseLeave += new EventHandler(control_Leave);
                     foreach (Control control2 in control1.Controls) {
                         control2.MouseEnter += new EventHandler(control_Enter);
                         control2.MouseLeave += new EventHandler(control_Leave);
