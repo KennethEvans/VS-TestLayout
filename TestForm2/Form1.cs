@@ -124,6 +124,8 @@ namespace TestForm2 {
             VERTSIZE = 6, // mm
             HORZRES = 8,
             VERTRES = 10,
+            LOGPIXELSX = 88,
+            LOGPIXELSY = 90,
             DESKTOPVERTRES = 117,
             DESKTOPHORZRES = 118,
             // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
@@ -136,14 +138,17 @@ namespace TestForm2 {
         private string deviceCapsInfo() {
             StringBuilder sb = new StringBuilder();
             Graphics g = Graphics.FromHwnd(IntPtr.Zero);
-            IntPtr desktop = g.GetHdc();
-            int hSize = GetDeviceCaps(desktop, (int)DeviceCap.HORZSIZE);
-            int vSize = GetDeviceCaps(desktop, (int)DeviceCap.VERTSIZE);
-            int virtH = GetDeviceCaps(desktop, (int)DeviceCap.HORZRES);
-            int virtV = GetDeviceCaps(desktop, (int)DeviceCap.VERTRES);
-            int physH = GetDeviceCaps(desktop, (int)DeviceCap.DESKTOPHORZRES);
-            int physV = GetDeviceCaps(desktop, (int)DeviceCap.DESKTOPVERTRES);
+            IntPtr hDC = g.GetHdc();
+            int hSize = GetDeviceCaps(hDC, (int)DeviceCap.HORZSIZE);
+            int vSize = GetDeviceCaps(hDC, (int)DeviceCap.VERTSIZE);
+            int virtH = GetDeviceCaps(hDC, (int)DeviceCap.HORZRES);
+            int virtV = GetDeviceCaps(hDC, (int)DeviceCap.VERTRES);
+            int physH = GetDeviceCaps(hDC, (int)DeviceCap.DESKTOPHORZRES);
+            int physV = GetDeviceCaps(hDC, (int)DeviceCap.DESKTOPVERTRES);
+            int logpxH = GetDeviceCaps(hDC, (int)DeviceCap.LOGPIXELSX);
+            int logpxV = GetDeviceCaps(hDC, (int)DeviceCap.LOGPIXELSY);
             sb.AppendLine("Size (mm)=" + hSize + "x" + vSize);
+            sb.AppendLine("Logical Pixels=" + logpxH + "x" + logpxV);
             sb.AppendLine("Virtual Resolution=" + virtH + "x" + virtV);
             sb.AppendLine("Physical Resolution=" + physH + "x" + physV);
             sb.AppendLine("Scale (%)=" + 100f * (float)physH / (float)virtH
