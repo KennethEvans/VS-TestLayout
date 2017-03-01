@@ -18,6 +18,9 @@ namespace TestForm2 {
             setHandlers();
         }
 
+        /// <summary>
+        /// Set the handlers so each Cpontrol will print its info.
+        /// </summary>
         private void setHandlers() {
             MouseEnter += new EventHandler(control_Enter);
             MouseLeave += new EventHandler(control_Leave);
@@ -45,13 +48,26 @@ namespace TestForm2 {
                 sb.AppendLine(controlInfo(control));
                 control = control.Parent;
             }
-            textBox1.Text = sb.ToString();
+
+            // The Form
+            sb.AppendLine(this.Name);
+            sb.AppendLine("AutoSize=" + this.AutoSize);
+            sb.AppendLine("AutoSizeMode=" + this.AutoSizeMode);
+            sb.AppendLine("AutoScaleMode=" + this.AutoScaleMode);
+            sb.AppendLine(this.Width + "x" + this.Height);
+            sb.Append(displayInfo());
+            textBox5.Text = sb.ToString();
         }
 
         private void control_Leave(object sender, EventArgs e) {
-            textBox1.Text = "";
+            textBox5.Text = "";
         }
 
+        /// <summary>
+        /// Returns info about this control.
+        /// </summary>
+        /// <param name="control"></param>
+        /// <returns></returns>
         private string controlInfo(Control control) {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(control.Name);
@@ -71,6 +87,25 @@ namespace TestForm2 {
                 Panel control1 = (Panel)control;
                 sb.AppendLine("AutoSizeMode=" + control1.AutoSizeMode);
             }
+            sb.AppendLine(control.Width + "x" + control.Height);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Gets information about the display.
+        /// </summary>
+        /// <returns></returns>
+        private string displayInfo() {
+            StringBuilder sb = new StringBuilder();
+            float dpiX, dpiY;
+            Graphics graphics = this.CreateGraphics();
+            dpiX = graphics.DpiX;
+            dpiY = graphics.DpiY;
+            sb.AppendLine("Dpi=" + dpiX + "x" + dpiY);
+            System.Drawing.Rectangle rect = Screen.PrimaryScreen.Bounds;
+            sb.AppendLine("Bounds=" + rect.Width + "x" + rect.Height);
+            rect = Screen.PrimaryScreen.WorkingArea;
+            sb.AppendLine("WorkingArea=" + rect.Width + "x" + rect.Height);
             return sb.ToString();
         }
     }
