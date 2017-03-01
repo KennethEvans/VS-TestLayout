@@ -55,7 +55,6 @@
             this.textBox5.Multiline = true;
             this.textBox5.Name = "textBox5";
             this.textBox5.ReadOnly = true;
-            this.textBox5.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBox5.Size = new System.Drawing.Size(572, 716);
             this.textBox5.TabIndex = 4;
             this.textBox5.TabStop = false;

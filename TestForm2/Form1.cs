@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -55,7 +56,13 @@ namespace TestForm2 {
             sb.AppendLine("AutoSizeMode=" + this.AutoSizeMode);
             sb.AppendLine("AutoScaleMode=" + this.AutoScaleMode);
             sb.AppendLine(this.Width + "x" + this.Height);
+
+            // The Display
+            sb.AppendLine();
+            sb.AppendLine("Display");
             sb.Append(displayInfo());
+            sb.Append(deviceCapsInfo());
+
             textBox5.Text = sb.ToString();
         }
 
@@ -98,14 +105,51 @@ namespace TestForm2 {
         private string displayInfo() {
             StringBuilder sb = new StringBuilder();
             float dpiX, dpiY;
-            Graphics graphics = this.CreateGraphics();
-            dpiX = graphics.DpiX;
-            dpiY = graphics.DpiY;
+            Graphics g = this.CreateGraphics();
+            dpiX = g.DpiX;
+            dpiY = g.DpiY;
+            g.Dispose();
             sb.AppendLine("Dpi=" + dpiX + "x" + dpiY);
-            System.Drawing.Rectangle rect = Screen.PrimaryScreen.Bounds;
-            sb.AppendLine("Bounds=" + rect.Width + "x" + rect.Height);
+            Rectangle rect = Screen.PrimaryScreen.Bounds;
+            sb.AppendLine("Screen Bounds=" + rect.Width + "x" + rect.Height);
             rect = Screen.PrimaryScreen.WorkingArea;
-            sb.AppendLine("WorkingArea=" + rect.Width + "x" + rect.Height);
+            sb.AppendLine("Screen WorkingArea=" + rect.Width + "x" + rect.Height);
+            return sb.ToString();
+        }
+
+        [DllImport("gdi32.dll")]
+        static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+        public enum DeviceCap {
+            HORZSIZE = 4, // mm
+            VERTSIZE = 6, // mm
+            HORZRES = 8,
+            VERTRES = 10,
+            DESKTOPVERTRES = 117,
+            DESKTOPHORZRES = 118,
+            // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
+        }
+
+        /// <summary>
+        /// Gets information from DeviceCaps.
+        /// </summary>
+        /// <returns></returns>
+        private string deviceCapsInfo() {
+            StringBuilder sb = new StringBuilder();
+            Graphics g = Graphics.FromHwnd(IntPtr.Zero);
+            IntPtr desktop = g.GetHdc();
+            int hSize = GetDeviceCaps(desktop, (int)DeviceCap.HORZSIZE);
+            int vSize = GetDeviceCaps(desktop, (int)DeviceCap.VERTSIZE);
+            int virtH = GetDeviceCaps(desktop, (int)DeviceCap.HORZRES);
+            int virtV = GetDeviceCaps(desktop, (int)DeviceCap.VERTRES);
+            int physH = GetDeviceCaps(desktop, (int)DeviceCap.DESKTOPHORZRES);
+            int physV = GetDeviceCaps(desktop, (int)DeviceCap.DESKTOPVERTRES);
+            sb.AppendLine("Size (mm)=" + hSize + "x" + vSize);
+            sb.AppendLine("Virtual Resolution=" + virtH + "x" + virtV);
+            sb.AppendLine("Physical Resolution=" + physH + "x" + physV);
+            sb.AppendLine("Scale (%)=" + 100f * (float)physH / (float)virtH
+                + "x" + 100f * (float)physV / (float)virtV);
+
+            g.Dispose();
             return sb.ToString();
         }
     }
