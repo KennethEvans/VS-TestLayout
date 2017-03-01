@@ -15,12 +15,17 @@ namespace TestForm2 {
         private static string LF = Environment.NewLine;
 
         public Form1() {
+            // this.Font = SystemFonts.MessageBoxFont;
+            // this.Font = new Font(this.Font.Name, 10);
+            // this.Font = getScaledFont();
             InitializeComponent();
+
+            // Set the handlers to display info for the selected cControl
             setHandlers();
         }
 
         /// <summary>
-        /// Set the handlers so each Cpontrol will print its info.
+        /// Set the handlers so each Control will print its info.
         /// </summary>
         private void setHandlers() {
             MouseEnter += new EventHandler(control_Enter);
@@ -34,9 +39,11 @@ namespace TestForm2 {
                     foreach (Control control2 in control1.Controls) {
                         control2.MouseEnter += new EventHandler(control_Enter);
                         control2.MouseLeave += new EventHandler(control_Leave);
+#if false
                         Debug.Print("control=" + control.Name
                             + " control1=" + control1.Name
                            + " control2" + control2.Name);
+#endif
                     }
                 }
             }
@@ -55,6 +62,12 @@ namespace TestForm2 {
             sb.AppendLine("AutoSize=" + this.AutoSize);
             sb.AppendLine("AutoSizeMode=" + this.AutoSizeMode);
             sb.AppendLine("AutoScaleMode=" + this.AutoScaleMode);
+            sb.AppendLine("AutoScaleDimensions=" + this.AutoScaleDimensions);
+            sb.AppendLine("CurrentAutoScaleDimensions=" + this.CurrentAutoScaleDimensions);
+            sb.AppendLine("AutoScaleFactor=" + this.AutoScaleFactor);
+            Font font = this.Font;
+            sb.AppendLine("Font=" + font.Name + " " + font.SizeInPoints + " pt" + " (" + font.Size
+                + " " + Font.Unit + ")");
             sb.AppendLine(this.Width + "x" + this.Height);
 
             // The Display
@@ -156,6 +169,16 @@ namespace TestForm2 {
 
             g.Dispose();
             return sb.ToString();
+        }
+
+        private Font getScaledFont() {
+            float dpiX, dpiY;
+            Graphics g = this.CreateGraphics();
+            dpiX = g.DpiX;
+            dpiY = g.DpiY;
+            g.Dispose();
+            Font font = this.Font;
+            return new Font(font.Name, font.SizeInPoints * 96F / dpiY);
         }
     }
 }
