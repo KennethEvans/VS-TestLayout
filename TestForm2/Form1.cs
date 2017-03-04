@@ -102,6 +102,7 @@ namespace TestForm2 {
                 sb.AppendLine("TextAlign=" + control1.TextAlign);
             } else if (control is Button) {
                 Button control1 = (Button)control;
+                sb.AppendLine("AutoSizeMode=" + control1.AutoSizeMode);
                 sb.AppendLine("TextAlign=" + control1.TextAlign);
             } else if (control is Panel) {
                 Panel control1 = (Panel)control;
