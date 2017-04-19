@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
 namespace TestForm2 {
     public partial class Form1 : Form {
         private static string LF = Environment.NewLine;
@@ -131,6 +132,26 @@ namespace TestForm2 {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Gets information about the display.
+        /// </summary>
+        /// <returns></returns>
+        private string displayScreenInfo() {
+            StringBuilder sb = new StringBuilder();
+            Screen screen = Screen.FromControl(this);
+            uint dpiX, dpiY;
+            screen.GetDpi(DpiType.Effective, out dpiX, out dpiY);
+            sb.AppendLine("Screen DeviceName: " + screen.DeviceName);
+            sb.AppendLine("  DPI: " + dpiX + "x" + dpiY);
+            sb.AppendLine("  Bounds: X=" + screen.Bounds.X
+                + " Y=" + screen.Bounds.Y);
+            sb.AppendLine("    Width=" + screen.Bounds.Width
+                + " Height=" + screen.Bounds.Height);
+            sb.AppendLine("  WorkingArea: " + screen.WorkingArea.Width + "x"
+                + screen.WorkingArea.Height);
+            return sb.ToString();
+        }
+
         [DllImport("gdi32.dll")]
         static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
         public enum DeviceCap {
@@ -181,5 +202,30 @@ namespace TestForm2 {
             Font font = this.Font;
             return new Font(font.Name, font.SizeInPoints * 96F / dpiY);
         }
+
+        protected override void WndProc(ref Message m) {
+            switch (m.Msg) {
+                //This message is sent when the form is dragged to a different monitor i.e. when
+                //the bigger part of its are is on the new monitor. Note that handling the message immediately
+                //might change the size of the form so that it no longer overlaps the new monitor in its bigger part
+                //which in turn will send again the WM_DPICHANGED message and this might cause misbehavior.
+                //Therefore we delay the scaling if the form is being moved and we use the CanPerformScaling method to 
+                //check if it is safe to perform the scaling.
+                case 0x02E0: //WM_DPICHANGED
+                    {
+                        int newDpi = m.WParam.ToInt32() & 0xFFFF;
+                        float scaleFactor = (float)newDpi / (float)96;
+                        StringBuilder sb = new StringBuilder();
+                        sb.AppendLine("WM_DPICHANGED");
+                        sb.AppendLine("New DPI: " + newDpi);
+                        sb.AppendLine("New Scale: " + scaleFactor);
+                        sb.AppendLine(displayScreenInfo());
+                        textBox5.Text = sb.ToString();
+                    }
+                    break;
+            }
+            base.WndProc(ref m);
+        }
+
     }
 }
