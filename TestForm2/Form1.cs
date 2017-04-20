@@ -14,12 +14,20 @@ using System.Windows.Forms;
 namespace TestForm2 {
     public partial class Form1 : Form {
         private static string LF = Environment.NewLine;
+        private float currentDpi = 0;
+        private float initialDpi;
+        private Font initialFont;
+        private Size initialSize;
 
         public Form1() {
             // this.Font = SystemFonts.MessageBoxFont;
             // this.Font = new Font(this.Font.Name, 10);
             // this.Font = getScaledFont();
             InitializeComponent();
+
+            initialDpi = getDpi();
+            initialFont = this.Font;
+            initialSize = this.Size;
 
             // Set the handlers to display info for the selected cControl
             setHandlers();
@@ -76,6 +84,9 @@ namespace TestForm2 {
             sb.AppendLine("Display");
             sb.Append(displayInfo());
             sb.Append(deviceCapsInfo());
+            sb.AppendLine();
+            sb.AppendLine("Screen");
+            sb.Append(displayScreenInfo());
 
             textBox5.Text = sb.ToString();
         }
@@ -114,6 +125,30 @@ namespace TestForm2 {
         }
 
         /// <summary>
+        ///  Gets the current dpi.
+        /// </summary>
+        /// <returns></returns>
+        private float getDpi() {
+            Graphics g = this.CreateGraphics();
+            float dpi = g.DpiY;
+            g.Dispose();
+            return dpi;
+        }
+
+        private void rescale() {
+            if (initialDpi == 0) return;
+            if (initialFont != null) {
+                float size = initialFont.SizeInPoints * currentDpi / initialDpi;
+                Font = new Font(initialFont.Name, size);
+            }
+            if (initialSize != null) {
+                int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
+                int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
+                this.Size = new Size(width, height);
+            }
+        }
+
+        /// <summary>
         /// Gets information about the display.
         /// </summary>
         /// <returns></returns>
@@ -133,7 +168,7 @@ namespace TestForm2 {
         }
 
         /// <summary>
-        /// Gets information about the display.
+        /// Gets information about the screen.
         /// </summary>
         /// <returns></returns>
         private string displayScreenInfo() {
@@ -144,8 +179,8 @@ namespace TestForm2 {
             sb.AppendLine("Screen DeviceName: " + screen.DeviceName);
             sb.AppendLine("  DPI: " + dpiX + "x" + dpiY);
             sb.AppendLine("  Bounds: X=" + screen.Bounds.X
-                + " Y=" + screen.Bounds.Y);
-            sb.AppendLine("    Width=" + screen.Bounds.Width
+                + " Y=" + screen.Bounds.Y
+                + " Width=" + screen.Bounds.Width
                 + " Height=" + screen.Bounds.Height);
             sb.AppendLine("  WorkingArea: " + screen.WorkingArea.Width + "x"
                 + screen.WorkingArea.Height);
@@ -214,6 +249,8 @@ namespace TestForm2 {
                 case 0x02E0: //WM_DPICHANGED
                     {
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
+                        currentDpi = newDpi;
+                        rescale();
                         float scaleFactor = (float)newDpi / (float)96;
                         StringBuilder sb = new StringBuilder();
                         sb.AppendLine("WM_DPICHANGED");
