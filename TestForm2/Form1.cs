@@ -26,8 +26,8 @@ namespace TestForm2 {
             InitializeComponent();
 
             initialDpi = getDpi();
-            initialFont = this.Font;
-            initialSize = this.Size;
+            initialFont = Font;
+            initialSize = Size;
 
             // Set the handlers to display info for the selected cControl
             setHandlers();
@@ -58,6 +58,11 @@ namespace TestForm2 {
             }
         }
 
+        /// <summary>
+        /// Prints info depending on what control is entered.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void control_Enter(object sender, EventArgs e) {
             Control control = (Control)sender;
             StringBuilder sb = new StringBuilder();
@@ -91,6 +96,11 @@ namespace TestForm2 {
             textBox5.Text = sb.ToString();
         }
 
+        /// <summary>
+        /// Clears info when control is left.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void control_Leave(object sender, EventArgs e) {
             textBox5.Text = "";
         }
@@ -135,6 +145,9 @@ namespace TestForm2 {
             return dpi;
         }
 
+        /// <summary>
+        /// Rescales.  Only used for dpiAware=true/pm.
+        /// </summary>
         private void rescale() {
             if (initialDpi == 0) return;
             if (initialFont != null) {
@@ -228,6 +241,10 @@ namespace TestForm2 {
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Gets a scaled font from the current font.  Used for testing.
+        /// </summary>
+        /// <returns></returns>
         private Font getScaledFont() {
             float dpiX, dpiY;
             Graphics g = this.CreateGraphics();
@@ -238,6 +255,14 @@ namespace TestForm2 {
             return new Font(font.Name, font.SizeInPoints * 96F / dpiY);
         }
 
+        /// <summary>
+        /// Overriden WndProc to get WM_DPICHANGED messages.  There will not
+        /// be any except for dpiAware=true/pm.  Calls the base version at the 
+        /// end. An alternative is to use DefWndProc. DefWndProc is called by
+        /// WndProc if the message is not handled by WndProc.
+
+        /// </summary>
+        /// <param name="m"></param>
         protected override void WndProc(ref Message m) {
             switch (m.Msg) {
                 //This message is sent when the form is dragged to a different monitor i.e. when
