@@ -25,7 +25,7 @@ namespace TestForm2 {
             // this.Font = getScaledFont();
             InitializeComponent();
 
-            initialDpi = getDpi();
+            initialDpi = getDpiFromGraphics();
             initialFont = Font;
             initialSize = Size;
 
@@ -71,7 +71,11 @@ namespace TestForm2 {
                 control = control.Parent;
             }
 
-            // The Form
+            // The form
+#if false  // DEBUG
+            sb.AppendLine("Screens");
+            sb.AppendLine(displayAllScreensInfo());
+#endif
             sb.AppendLine(this.Name);
             sb.AppendLine("AutoSize=" + this.AutoSize);
             sb.AppendLine("AutoSizeMode=" + this.AutoSizeMode);
@@ -135,10 +139,10 @@ namespace TestForm2 {
         }
 
         /// <summary>
-        ///  Gets the current dpi.
+        ///  Gets the current dpi. This seems to be independent of the screen.
         /// </summary>
         /// <returns></returns>
-        private float getDpi() {
+        private float getDpiFromGraphics() {
             Graphics g = this.CreateGraphics();
             float dpi = g.DpiY;
             g.Dispose();
@@ -200,27 +204,42 @@ namespace TestForm2 {
             return sb.ToString();
         }
 
-        [DllImport("gdi32.dll")]
-        static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
-        public enum DeviceCap {
-            HORZSIZE = 4, // mm
-            VERTSIZE = 6, // mm
-            HORZRES = 8,
-            VERTRES = 10,
-            LOGPIXELSX = 88,
-            LOGPIXELSY = 90,
-            DESKTOPVERTRES = 117,
-            DESKTOPHORZRES = 118,
-            // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
+        /// <summary>
+        /// Gets information about the screen.
+        /// </summary>
+        /// <returns></returns>
+        private string displayAllScreensInfo() {
+            StringBuilder sb = new StringBuilder();
+            uint dpiX, dpiY;
+            PROCESS_DPI_AWARENESS awareness;
+            // IntPtr.Zero is the current process
+            int res = GetProcessDpiAwareness(IntPtr.Zero, out awareness);
+            if (res == S_OK) {
+                sb.AppendLine("DPI Awareness: " + awareness);
+            } else {
+                sb.AppendLine("DPI Awareness failed: res=" + res);
+            }
+            foreach (var screen in Screen.AllScreens) {
+                screen.GetDpi(DpiType.Effective, out dpiX, out dpiY);
+                sb.AppendLine("Screen DeviceName: " + screen.DeviceName);
+                sb.AppendLine("  DPI: " + dpiX + "x" + dpiY);
+                sb.AppendLine("  Bounds: X=" + screen.Bounds.X
+                    + " Y=" + screen.Bounds.Y
+                    + " Width=" + screen.Bounds.Width
+                    + " Height=" + screen.Bounds.Height);
+                sb.AppendLine("  WorkingArea: " + screen.WorkingArea.Width + "x"
+                    + screen.WorkingArea.Height);
+            }
+            return sb.ToString();
         }
 
         /// <summary>
-        /// Gets information from DeviceCaps.
+        /// Gets information from DeviceCaps.  THis seems to be for the main display.
         /// </summary>
         /// <returns></returns>
         private string deviceCapsInfo() {
             StringBuilder sb = new StringBuilder();
-            Graphics g = Graphics.FromHwnd(IntPtr.Zero);
+            Graphics g = Graphics.FromHwnd(this.Handle);
             IntPtr hDC = g.GetHdc();
             int hSize = GetDeviceCaps(hDC, (int)DeviceCap.HORZSIZE);
             int vSize = GetDeviceCaps(hDC, (int)DeviceCap.VERTSIZE);
@@ -281,6 +300,8 @@ namespace TestForm2 {
                         sb.AppendLine("WM_DPICHANGED");
                         sb.AppendLine("New DPI: " + newDpi);
                         sb.AppendLine("New Scale: " + scaleFactor);
+                        float graphicsDpi = getDpiFromGraphics();
+                        sb.AppendLine("DPI from Graphics:" + graphicsDpi);
                         sb.AppendLine(displayScreenInfo());
                         textBox5.Text = sb.ToString();
                     }
@@ -288,6 +309,32 @@ namespace TestForm2 {
             }
             base.WndProc(ref m);
         }
+
+        // External Windows functions
+
+        private const int S_OK = 0;
+        private enum PROCESS_DPI_AWARENESS {
+            PROCESS_DPI_UNAWARE = 0,
+            PROCESS_SYSTEM_DPI_AWARE = 1,
+            PROCESS_PER_MONITOR_DPI_AWARE = 2
+        }
+        [DllImport("Shcore.dll")]
+        private static extern int GetProcessDpiAwareness(IntPtr hprocess, out PROCESS_DPI_AWARENESS value);
+
+        [DllImport("gdi32.dll")]
+        static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+        public enum DeviceCap {
+            HORZSIZE = 4, // mm
+            VERTSIZE = 6, // mm
+            HORZRES = 8,
+            VERTRES = 10,
+            LOGPIXELSX = 88,
+            LOGPIXELSY = 90,
+            DESKTOPVERTRES = 117,
+            DESKTOPHORZRES = 118,
+            // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
+        }
+
 
     }
 }
