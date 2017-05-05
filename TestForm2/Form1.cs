@@ -27,7 +27,7 @@ namespace TestForm2 {
 
             initialDpi = getDpiFromGraphics();
             initialFont = Font;
-            initialSize = Size;
+            initialSize = ClientSize;
 
             // Set the handlers to display info for the selected cControl
             setHandlers();
@@ -161,7 +161,8 @@ namespace TestForm2 {
             if (initialSize != null) {
                 int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
                 int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
-                this.Size = new Size(width, height);
+                //this.ClientSize = new Size(width, height);
+                ClientSize = new Size(width, height);
             }
         }
 
@@ -300,6 +301,8 @@ namespace TestForm2 {
                         sb.AppendLine("WM_DPICHANGED");
                         sb.AppendLine("New DPI: " + newDpi);
                         sb.AppendLine("New Scale: " + scaleFactor);
+                        sb.AppendLine("InitialSize: " + initialSize);
+                        sb.AppendLine("ClientSize: " + ClientSize);
                         float graphicsDpi = getDpiFromGraphics();
                         sb.AppendLine("DPI from Graphics:" + graphicsDpi);
                         sb.AppendLine(displayScreenInfo());
