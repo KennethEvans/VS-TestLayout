@@ -18,12 +18,19 @@ namespace TestForm2 {
         private float initialDpi;
         private Font initialFont;
         private Size initialSize;
+        private Logger logger;
 
         public Form1() {
             // this.Font = SystemFonts.MessageBoxFont;
             // this.Font = new Font(this.Font.Name, 10);
             // this.Font = getScaledFont();
             InitializeComponent();
+
+            logger = new Logger();
+            logger.ControlList = new Control[] {
+                this,tableLayoutPanelTop, textBox3, textBox4, textBox5,
+            };
+            logger.LogControls("After Initialize");
 
             initialDpi = getDpiFromGraphics();
             initialFont = Font;
@@ -153,6 +160,7 @@ namespace TestForm2 {
         /// Rescales.  Only used for dpiAware=true/pm.
         /// </summary>
         private void rescale() {
+            logger.LogControls("rescale (Before)");
             if (initialDpi == 0) return;
             if (initialFont != null) {
                 float size = initialFont.SizeInPoints * currentDpi / initialDpi;
@@ -164,6 +172,7 @@ namespace TestForm2 {
                 //this.ClientSize = new Size(width, height);
                 ClientSize = new Size(width, height);
             }
+            logger.LogControls("rescale (After)");
         }
 
         /// <summary>
@@ -293,6 +302,7 @@ namespace TestForm2 {
                 //check if it is safe to perform the scaling.
                 case 0x02E0: // WM_DPICHANGED
                     {
+                        logger.Log("WM_DPICHANGED");
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
                         currentDpi = newDpi;
                         rescale();
@@ -311,6 +321,7 @@ namespace TestForm2 {
                     break;
                 case 0x0081:  // WM_NCCREATE
                     {
+                        logger.Log("WM_DPICHANGED");
                         EnableNonClientDpiScaling(this.Handle);
                     }
                     break;
