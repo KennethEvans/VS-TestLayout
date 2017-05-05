@@ -290,7 +290,7 @@ namespace TestForm2 {
                 //which in turn will send again the WM_DPICHANGED message and this might cause misbehavior.
                 //Therefore we delay the scaling if the form is being moved and we use the CanPerformScaling method to 
                 //check if it is safe to perform the scaling.
-                case 0x02E0: //WM_DPICHANGED
+                case 0x02E0: // WM_DPICHANGED
                     {
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
                         currentDpi = newDpi;
@@ -306,11 +306,20 @@ namespace TestForm2 {
                         textBox5.Text = sb.ToString();
                     }
                     break;
+                case 0x0081:  // WM_NCCREATE
+                    {
+                        EnableNonClientDpiScaling(this.Handle);
+                    }
+                    break;
             }
             base.WndProc(ref m);
         }
 
         // External Windows functions
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool EnableNonClientDpiScaling(IntPtr hwnd);
 
         private const int S_OK = 0;
         private enum PROCESS_DPI_AWARENESS {
