@@ -18,6 +18,7 @@ namespace TestForm2 {
         private static string LF = Environment.NewLine;
         private float currentDpi = 0;
         private float initialDpi;
+        private float previousDpi;
         private Font initialFont;
         private Size initialSize;
         private Logger logger;
@@ -35,12 +36,15 @@ namespace TestForm2 {
             };
             logger.logControlsLabels();
 #endif
-            initialDpi = getDpiFromGraphics();
+            initialDpi = currentDpi = previousDpi = getDpiFromGraphics();
             initialFont = Font;
             initialSize = ClientSize;
 #if doLogging
-            logger.log("After InitializeComponent initialSize="
+            logger.log("After InitializeComponent: prevDpi=" + previousDpi
+               + " curDpi=" + currentDpi);
+            logger.log("After InitializeComponent: initialSize="
                 + initialSize.ToString());
+            logger.logControls("After InitializeComponent");
 #endif
 
             // Set the handlers to display info for the selected cControl
@@ -168,21 +172,23 @@ namespace TestForm2 {
         /// </summary>
         private void rescale() {
 #if doLogging
+            logger.log("rescale: prevDpi=" + previousDpi
+                + " curDpi=" + currentDpi);
+            logger.log("rescale: ClientSize=" + ClientSize.ToString());
             logger.logControls("rescale (Before)");
 #endif
-            if (initialDpi == 0) return;
+            if (previousDpi == 0 || currentDpi == 0) return;
             if (initialFont != null) {
                 float size = initialFont.SizeInPoints * currentDpi / initialDpi;
                 Font = new Font(initialFont.Name, size);
             }
-            if (initialSize != null) {
-                int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
-                int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
-                //this.ClientSize = new Size(width, height);
-                ClientSize = new Size(width, height);
-            }
+            //int width = (int)Math.Round(ClientSize.Width * currentDpi / previousDpi);
+            //int height = (int)Math.Round(ClientSize.Height * currentDpi / previousDpi);
+            int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
+            int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
+            ClientSize = new Size(width, height);
 #if doLogging
-            logger.logControls("rescale (After)");
+            logger.logControls("rescale (After): ClientSize=" + ClientSize.ToString());
 #endif
         }
 
@@ -317,6 +323,7 @@ namespace TestForm2 {
                         logger.log("WM_DPICHANGED");
 #endif
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
+                        previousDpi = currentDpi;
                         currentDpi = newDpi;
                         rescale();
                         float scaleFactor = (float)newDpi / (float)96;
@@ -335,7 +342,7 @@ namespace TestForm2 {
                 case 0x0081:  // WM_NCCREATE
                     {
 #if doLogging
-                        logger.log("WM_DPICHANGED");
+                        logger.log("WM_NCCREATE");
 #endif
                         EnableNonClientDpiScaling(this.Handle);
                     }

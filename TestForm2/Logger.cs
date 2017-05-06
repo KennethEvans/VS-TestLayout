@@ -92,7 +92,7 @@ namespace TestForm2 {
             foreach (Control control in controlList) {
                 sb.Append(control.AutoSize
                     + " [" + control.Anchor + "] [" + control.Dock + "] "
-                    + control.Width + " " + control.Height
+                    + control.ClientSize.Width + " " + control.ClientSize.Height
                     + SEPARATOR);
             }
             logLine(sb.ToString());
