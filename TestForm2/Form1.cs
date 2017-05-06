@@ -1,4 +1,5 @@
 ﻿#define doLogging
+#define verbose
 
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ using System.Windows.Forms;
 namespace TestForm2 {
     public partial class Form1 : Form {
         private static string LF = Environment.NewLine;
+        private bool doScale = false;
         private float currentDpi = 0;
         private float initialDpi;
         private float previousDpi;
@@ -40,11 +42,10 @@ namespace TestForm2 {
             initialFont = Font;
             initialSize = ClientSize;
 #if doLogging
-            logger.log("After InitializeComponent: prevDpi=" + previousDpi
+            logger.log("After InitializeComponent prevDpi=" + previousDpi
                + " curDpi=" + currentDpi);
-            logger.log("After InitializeComponent: initialSize="
+            logger.logControls("After InitializeComponent initialSize="
                 + initialSize.ToString());
-            logger.logControls("After InitializeComponent");
 #endif
 
             // Set the handlers to display info for the selected cControl
@@ -168,31 +169,6 @@ namespace TestForm2 {
         }
 
         /// <summary>
-        /// Rescales.  Only used for dpiAware=true/pm.
-        /// </summary>
-        private void rescale() {
-#if doLogging
-            logger.log("rescale: prevDpi=" + previousDpi
-                + " curDpi=" + currentDpi);
-            logger.log("rescale: ClientSize=" + ClientSize.ToString());
-            logger.logControls("rescale (Before)");
-#endif
-            if (previousDpi == 0 || currentDpi == 0) return;
-            if (initialFont != null) {
-                float size = initialFont.SizeInPoints * currentDpi / initialDpi;
-                Font = new Font(initialFont.Name, size);
-            }
-            //int width = (int)Math.Round(ClientSize.Width * currentDpi / previousDpi);
-            //int height = (int)Math.Round(ClientSize.Height * currentDpi / previousDpi);
-            int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
-            int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
-            ClientSize = new Size(width, height);
-#if doLogging
-            logger.logControls("rescale (After): ClientSize=" + ClientSize.ToString());
-#endif
-        }
-
-        /// <summary>
         /// Gets information about the display.
         /// </summary>
         /// <returns></returns>
@@ -302,6 +278,38 @@ namespace TestForm2 {
         }
 
         /// <summary>
+        /// Rescales.  Only used for dpiAware=true/pm.
+        /// </summary>
+        private void rescale() {
+#if doLogging
+            logger.log("rescale prevDpi=" + previousDpi
+                + " curDpi=" + currentDpi);
+            logger.logControls("rescale (Before) ClientSize=" + ClientSize.ToString());
+#endif
+            if (previousDpi == 0 || currentDpi == 0) return;
+            if (initialFont != null) {
+                float size = initialFont.SizeInPoints * currentDpi / initialDpi;
+                Font = new Font(initialFont.Name, size);
+            }
+            float scale = currentDpi / previousDpi;
+#if false
+            // Doesn't work
+            Scale(new SizeF(scale, scale));
+#elif false
+            // Doesn't work similar to above
+            int width = (int)Math.Round(ClientSize.Width * currentDpi / previousDpi);
+            int height = (int)Math.Round(ClientSize.Height * currentDpi / previousDpi);
+#elif true
+            int width = (int)Math.Round(initialSize.Width * currentDpi / initialDpi);
+            int height = (int)Math.Round(initialSize.Height * currentDpi / initialDpi);
+            ClientSize = new Size(width, height);
+#endif
+#if doLogging
+            logger.logControls("rescale (After) ClientSize=" + ClientSize.ToString());
+#endif
+        }
+
+        /// <summary>
         /// Overriden WndProc to get WM_DPICHANGED messages.  There will not
         /// be any except for dpiAware=true/pm.  Calls the base version at the 
         /// end. An alternative is to use DefWndProc. DefWndProc is called by
@@ -325,7 +333,8 @@ namespace TestForm2 {
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
                         previousDpi = currentDpi;
                         currentDpi = newDpi;
-                        rescale();
+                        doScale = true;
+                        //rescale();
                         float scaleFactor = (float)newDpi / (float)96;
                         StringBuilder sb = new StringBuilder();
                         sb.AppendLine("WM_DPICHANGED");
@@ -380,23 +389,46 @@ namespace TestForm2 {
             // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
         }
 
-        private void Form_ResizeEnd(object sender, EventArgs e) {
+        // Event handlers
+
+        private void Form1_ResizeBegin(object sender, EventArgs e) {
 #if doLogging
-            logger.logControls("Form_ResizeEnd");
-#endif
-            int width = (int)Math.Round(ClientSize.Width * initialDpi / currentDpi);
-            int height = (int)Math.Round(ClientSize.Height * initialDpi / currentDpi);
-            initialSize = new Size(width, height);
-#if doLogging
-            logger.log("Form_ResizeEnd initialSize="
+            logger.logControls("Form1_ResizeBegin initialSize="
                 + initialSize.ToString());
 #endif
         }
 
-        private void Form_SizeChanged(object sender, EventArgs e) {
+        private void Form1_ResizeEnd(object sender, EventArgs e) {
+#if doLogging
+            logger.logControls("Form1_ResizeEnd (before," + doScale
+                + ") initialSize=" + initialSize.ToString());
+#endif
+            if (doScale) {
+                doScale = false;
+                rescale();
+            } else {
+                int width = (int)Math.Round(ClientSize.Width * initialDpi / currentDpi);
+                int height = (int)Math.Round(ClientSize.Height * initialDpi / currentDpi);
+                initialSize = new Size(width, height);
+            }
+#if doLogging
+            logger.logControls("Form1_ResizeEnd (after," + doScale
+               + ") initialSize=" + initialSize.ToString());
+#endif
+        }
+
+        private void Form1_Resize(object sender, EventArgs e) {
+#if doLogging && false
+            logger.logControls("Form1_Resize initialSize="
+                + initialSize.ToString());
+#endif
+        }
+
+        private void Form1_SizeChanged(object sender, EventArgs e) {
 #if doLogging && false
             logger.logControls("Form_SizeChanged");
 #endif
         }
+
     }
 }
