@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define doLogging
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -26,15 +28,20 @@ namespace TestForm2 {
             // this.Font = getScaledFont();
             InitializeComponent();
 
+#if doLogging
             logger = new Logger();
             logger.ControlList = new Control[] {
                 this,tableLayoutPanelTop, textBox3, textBox4, textBox5,
             };
-            logger.LogControls("After Initialize");
-
+            logger.logControlsLabels();
+#endif
             initialDpi = getDpiFromGraphics();
             initialFont = Font;
             initialSize = ClientSize;
+#if doLogging
+            logger.log("After InitializeComponent initialSize="
+                + initialSize.ToString());
+#endif
 
             // Set the handlers to display info for the selected cControl
             setHandlers();
@@ -160,7 +167,9 @@ namespace TestForm2 {
         /// Rescales.  Only used for dpiAware=true/pm.
         /// </summary>
         private void rescale() {
-            logger.LogControls("rescale (Before)");
+#if doLogging
+            logger.logControls("rescale (Before)");
+#endif
             if (initialDpi == 0) return;
             if (initialFont != null) {
                 float size = initialFont.SizeInPoints * currentDpi / initialDpi;
@@ -172,7 +181,9 @@ namespace TestForm2 {
                 //this.ClientSize = new Size(width, height);
                 ClientSize = new Size(width, height);
             }
-            logger.LogControls("rescale (After)");
+#if doLogging
+            logger.logControls("rescale (After)");
+#endif
         }
 
         /// <summary>
@@ -302,7 +313,9 @@ namespace TestForm2 {
                 //check if it is safe to perform the scaling.
                 case 0x02E0: // WM_DPICHANGED
                     {
-                        logger.Log("WM_DPICHANGED");
+#if doLogging
+                        logger.log("WM_DPICHANGED");
+#endif
                         int newDpi = m.WParam.ToInt32() & 0xFFFF;
                         currentDpi = newDpi;
                         rescale();
@@ -321,7 +334,9 @@ namespace TestForm2 {
                     break;
                 case 0x0081:  // WM_NCCREATE
                     {
-                        logger.Log("WM_DPICHANGED");
+#if doLogging
+                        logger.log("WM_DPICHANGED");
+#endif
                         EnableNonClientDpiScaling(this.Handle);
                     }
                     break;
@@ -358,6 +373,23 @@ namespace TestForm2 {
             // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
         }
 
+        private void Form_ResizeEnd(object sender, EventArgs e) {
+#if doLogging
+            logger.logControls("Form_ResizeEnd");
+#endif
+            int width = (int)Math.Round(ClientSize.Width * initialDpi / currentDpi);
+            int height = (int)Math.Round(ClientSize.Height * initialDpi / currentDpi);
+            initialSize = new Size(width, height);
+#if doLogging
+            logger.log("Form_ResizeEnd initialSize="
+                + initialSize.ToString());
+#endif
+        }
 
+        private void Form_SizeChanged(object sender, EventArgs e) {
+#if doLogging && false
+            logger.logControls("Form_SizeChanged");
+#endif
+        }
     }
 }

@@ -265,6 +265,8 @@
             this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "Form1";
             this.Text = "Test Layout 2";
+            this.ResizeEnd += new System.EventHandler(this.Form_ResizeEnd);
+            this.SizeChanged += new System.EventHandler(this.Form_SizeChanged);
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
             this.flowLayoutPanel2.ResumeLayout(false);

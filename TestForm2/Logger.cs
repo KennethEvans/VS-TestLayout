@@ -7,38 +7,50 @@ using System.Windows.Forms;
 
 namespace TestForm2 {
     class Logger {
-        private static string SEPARATOR = ",";
+        private static string SEPARATOR = "\t";
         public static string LF = System.Environment.NewLine;
         private bool valid = true;
-        private bool writeControlsListColumns = true;
         private string path;
         private string directory = @"C:\Scratch\Logs\TestForm2";
         private string namePrefix = "TestForm2";
         private Control[] controlList;
 
         public Logger() {
-            this.path = directory + @"\" + namePrefix + nameTimeStamp();
+            setPath();
         }
 
         public Logger(string directory, string namePrefix) {
             this.directory = directory;
             this.namePrefix = namePrefix;
-            this.path = directory + @"\" + namePrefix + nameTimeStamp();
+            setPath();
+        }
+
+        /// <summary>
+        /// Constructs the path from the current values of directory and
+        /// namePrefix.
+        /// </summary>
+        private void setPath() {
+            this.path = directory + @"\" + namePrefix
+                + DateTime.Now.ToString("-yyyy-MM-dd_HH-mm-ss") + ".csv";
         }
 
         /// <summary>
         /// Logs a line with a timestamp plus the message.
         /// </summary>
         /// <param name="msg">The message to log.</param>
-        public void Log(string msg) {
-            LogLine(timeStamp() + " " + SEPARATOR + msg);
+        public void log(string msg) {
+            logLine(timeStamp() + " " + SEPARATOR + msg);
+        }
+
+        public void log(string msg1, string msg2) {
+            logLine(timeStamp() + " " + SEPARATOR + msg1 + SEPARATOR + msg2);
         }
 
         /// <summary>
         /// Logs a line with msg only (no timestamp).
         /// </summary>
         /// <param name="msg">The message to log.</param>
-        public void LogLine(string msg) {
+        public void logLine(string msg) {
             if (valid == false || path == null) return;
             System.IO.StreamWriter sw = null;
             try {
@@ -56,32 +68,42 @@ namespace TestForm2 {
             }
         }
 
-        public void LogControls(string msg) {
+        /// <summary>
+        /// Logs the column labels.  Should be called first.
+        /// </summary>
+        public void logControlsLabels() {
             if (controlList == null) return;
             StringBuilder sb = new StringBuilder();
-            if (writeControlsListColumns) {
-                writeControlsListColumns = false;
-                sb.Append("Time" + SEPARATOR + "Reason" + SEPARATOR);
-                foreach (Control control in controlList) {
-                    sb.Append(control.Name + SEPARATOR);
-                }
-                LogLine(sb.ToString());
+            sb.Append("Time" + SEPARATOR + "Message" + SEPARATOR);
+            foreach (Control control in controlList) {
+                sb.Append(control.Name + SEPARATOR);
             }
-            sb.Clear();
+            logLine(sb.ToString());
+        }
+
+        /// <summary>
+        /// Fills in information for each cControl in the list.
+        /// </summary>
+        /// <param name="msg"></param>
+        public void logControls(string msg) {
+            if (controlList == null) return;
+            StringBuilder sb = new StringBuilder();
             sb.Append(timeStamp() + SEPARATOR + msg + SEPARATOR);
             foreach (Control control in controlList) {
-                sb.Append(control.Width + " " + control.Height
+                sb.Append(control.AutoSize
+                    + " [" + control.Anchor + "] [" + control.Dock + "] "
+                    + control.Width + " " + control.Height
                     + SEPARATOR);
             }
-            LogLine(sb.ToString());
+            logLine(sb.ToString());
         }
 
+        /// <summary>
+        /// Generates a timestamp for a log entry.
+        /// </summary>
+        /// <returns></returns>
         public string timeStamp() {
             return DateTime.Now.ToString("s");
-        }
-
-        public string nameTimeStamp() {
-            return DateTime.Now.ToString("-yyyy-MM-dd_HH-mm-ss") + ".csv";
         }
 
         public string Path { get => path; }
