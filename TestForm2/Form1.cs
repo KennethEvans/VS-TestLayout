@@ -1,5 +1,4 @@
-﻿#define doLogging
-#define verbose
+﻿#undef doLogging
 
 using System;
 using System.Collections.Generic;
