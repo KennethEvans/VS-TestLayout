@@ -1,17 +1,10 @@
 ﻿#undef doLogging
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-
 
 namespace TestForm2 {
     public partial class Form1 : Form {
@@ -22,7 +15,9 @@ namespace TestForm2 {
         private float previousDpi;
         private Font initialFont;
         private Size initialSize;
+#if doLogging
         private Logger logger;
+#endif
 
         public Form1() {
             // this.Font = SystemFonts.MessageBoxFont;
@@ -99,10 +94,12 @@ namespace TestForm2 {
             sb.AppendLine("AutoSizeMode=" + this.AutoSizeMode);
             sb.AppendLine("AutoScaleMode=" + this.AutoScaleMode);
             sb.AppendLine("AutoScaleDimensions=" + this.AutoScaleDimensions);
-            sb.AppendLine("CurrentAutoScaleDimensions=" + this.CurrentAutoScaleDimensions);
+            sb.AppendLine("CurrentAutoScaleDimensions="
+                + this.CurrentAutoScaleDimensions);
             sb.AppendLine("AutoScaleFactor=" + this.AutoScaleFactor);
             Font font = this.Font;
-            sb.AppendLine("Font=" + font.Name + " " + font.SizeInPoints + " pt" + " (" + font.Size
+            sb.AppendLine("Font=" + font.Name + " " + font.SizeInPoints + " pt"
+                + " (" + font.Size
                 + " " + Font.Unit + ")");
             sb.AppendLine(this.Width + "x" + this.Height);
 
@@ -194,7 +191,8 @@ namespace TestForm2 {
             StringBuilder sb = new StringBuilder();
             Screen screen = Screen.FromControl(this);
             uint dpiX, dpiY;
-            screen.GetDpi(DpiType.Effective, out dpiX, out dpiY);
+            screen.GetDpi(System.Windows.Forms.NativeMethods.DpiType.Effective,
+                out dpiX, out dpiY);
             sb.AppendLine("Screen DeviceName: " + screen.DeviceName);
             sb.AppendLine("  DPI: " + dpiX + "x" + dpiY);
             sb.AppendLine("  Bounds: X=" + screen.Bounds.X
@@ -213,16 +211,18 @@ namespace TestForm2 {
         private string displayAllScreensInfo() {
             StringBuilder sb = new StringBuilder();
             uint dpiX, dpiY;
-            PROCESS_DPI_AWARENESS awareness;
+            NativeMethods.PROCESS_DPI_AWARENESS awareness;
             // IntPtr.Zero is the current process
-            int res = GetProcessDpiAwareness(IntPtr.Zero, out awareness);
-            if (res == S_OK) {
+            int res = NativeMethods.GetProcessDpiAwareness(IntPtr.Zero,
+                out awareness);
+            if (res == NativeMethods.S_OK) {
                 sb.AppendLine("DPI Awareness: " + awareness);
             } else {
                 sb.AppendLine("DPI Awareness failed: res=" + res);
             }
             foreach (var screen in Screen.AllScreens) {
-                screen.GetDpi(DpiType.Effective, out dpiX, out dpiY);
+                screen.GetDpi(System.Windows.Forms.NativeMethods.DpiType.Effective,
+                    out dpiX, out dpiY);
                 sb.AppendLine("Screen DeviceName: " + screen.DeviceName);
                 sb.AppendLine("  DPI: " + dpiX + "x" + dpiY);
                 sb.AppendLine("  Bounds: X=" + screen.Bounds.X
@@ -243,14 +243,22 @@ namespace TestForm2 {
             StringBuilder sb = new StringBuilder();
             Graphics g = Graphics.FromHwnd(this.Handle);
             IntPtr hDC = g.GetHdc();
-            int hSize = GetDeviceCaps(hDC, (int)DeviceCap.HORZSIZE);
-            int vSize = GetDeviceCaps(hDC, (int)DeviceCap.VERTSIZE);
-            int virtH = GetDeviceCaps(hDC, (int)DeviceCap.HORZRES);
-            int virtV = GetDeviceCaps(hDC, (int)DeviceCap.VERTRES);
-            int physH = GetDeviceCaps(hDC, (int)DeviceCap.DESKTOPHORZRES);
-            int physV = GetDeviceCaps(hDC, (int)DeviceCap.DESKTOPVERTRES);
-            int logpxH = GetDeviceCaps(hDC, (int)DeviceCap.LOGPIXELSX);
-            int logpxV = GetDeviceCaps(hDC, (int)DeviceCap.LOGPIXELSY);
+            int hSize = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.HORZSIZE);
+            int vSize = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.VERTSIZE);
+            int virtH = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.HORZRES);
+            int virtV = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.VERTRES);
+            int physH = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.DESKTOPHORZRES);
+            int physV = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.DESKTOPVERTRES);
+            int logpxH = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.LOGPIXELSX);
+            int logpxV = NativeMethods.GetDeviceCaps(hDC,
+                (int)NativeMethods.DeviceCap.LOGPIXELSY);
             sb.AppendLine("Size (mm)=" + hSize + "x" + vSize);
             sb.AppendLine("Logical Pixels=" + logpxH + "x" + logpxV);
             sb.AppendLine("Virtual Resolution=" + virtH + "x" + virtV);
@@ -318,12 +326,15 @@ namespace TestForm2 {
         /// <param name="m"></param>
         protected override void WndProc(ref Message m) {
             switch (m.Msg) {
-                //This message is sent when the form is dragged to a different monitor i.e. when
-                //the bigger part of its are is on the new monitor. Note that handling the message immediately
-                //might change the size of the form so that it no longer overlaps the new monitor in its bigger part
-                //which in turn will send again the WM_DPICHANGED message and this might cause misbehavior.
-                //Therefore we delay the scaling if the form is being moved and we use the CanPerformScaling method to 
-                //check if it is safe to perform the scaling.
+                // This message is sent when the form is dragged to a different
+                // monitor i.e. when the bigger part of its are is on the new
+                // monitor. Note that handling the message immediately
+                // might change the size of the form so that it no longer
+                // overlaps the new monitor in its bigger part which in turn
+                // will send again the WM_DPICHANGED message and this might
+                // cause misbehavior. Therefore we delay the scaling if the form
+                // is being moved and we use the CanPerformScaling method to 
+                //  check if it is safe to perform the scaling.
                 case 0x02E0: // WM_DPICHANGED
                     {
 #if doLogging
@@ -352,7 +363,7 @@ namespace TestForm2 {
 #if doLogging
                         logger.log("WM_NCCREATE");
 #endif
-                        EnableNonClientDpiScaling(this.Handle);
+                        NativeMethods.EnableNonClientDpiScaling(this.Handle);
                     }
                     break;
             }
@@ -361,32 +372,6 @@ namespace TestForm2 {
 
         // External Windows functions
 
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool EnableNonClientDpiScaling(IntPtr hwnd);
-
-        private const int S_OK = 0;
-        private enum PROCESS_DPI_AWARENESS {
-            PROCESS_DPI_UNAWARE = 0,
-            PROCESS_SYSTEM_DPI_AWARE = 1,
-            PROCESS_PER_MONITOR_DPI_AWARE = 2
-        }
-        [DllImport("Shcore.dll")]
-        private static extern int GetProcessDpiAwareness(IntPtr hprocess, out PROCESS_DPI_AWARENESS value);
-
-        [DllImport("gdi32.dll")]
-        static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
-        public enum DeviceCap {
-            HORZSIZE = 4, // mm
-            VERTSIZE = 6, // mm
-            HORZRES = 8,
-            VERTRES = 10,
-            LOGPIXELSX = 88,
-            LOGPIXELSY = 90,
-            DESKTOPVERTRES = 117,
-            DESKTOPHORZRES = 118,
-            // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
-        }
 
         // Event handlers
 
@@ -406,8 +391,10 @@ namespace TestForm2 {
                 doScale = false;
                 rescale();
             } else {
-                int width = (int)Math.Round(ClientSize.Width * initialDpi / currentDpi);
-                int height = (int)Math.Round(ClientSize.Height * initialDpi / currentDpi);
+                int width = (int)Math.Round(ClientSize.Width * initialDpi
+                    / currentDpi);
+                int height = (int)Math.Round(ClientSize.Height * initialDpi
+                    / currentDpi);
                 initialSize = new Size(width, height);
             }
 #if doLogging
@@ -428,6 +415,38 @@ namespace TestForm2 {
             logger.logControls("Form_SizeChanged");
 #endif
         }
+    }
 
+    /// <summary>
+    /// Class for native methods.
+    /// </summary>
+    internal static class NativeMethods {
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool EnableNonClientDpiScaling(IntPtr hwnd);
+
+        internal const int S_OK = 0;
+        internal enum PROCESS_DPI_AWARENESS {
+            PROCESS_DPI_UNAWARE = 0,
+            PROCESS_SYSTEM_DPI_AWARE = 1,
+            PROCESS_PER_MONITOR_DPI_AWARE = 2
+        }
+        [DllImport("Shcore.dll")]
+        internal static extern int GetProcessDpiAwareness(IntPtr hprocess,
+            out PROCESS_DPI_AWARENESS value);
+
+        [DllImport("gdi32.dll")]
+        internal static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+        internal enum DeviceCap {
+            HORZSIZE = 4, // mm
+            VERTSIZE = 6, // mm
+            HORZRES = 8,
+            VERTRES = 10,
+            LOGPIXELSX = 88,
+            LOGPIXELSY = 90,
+            DESKTOPVERTRES = 117,
+            DESKTOPHORZRES = 118,
+            // http://pinvoke.net/default.aspx/gdi32/GetDeviceCaps.html
+        }
     }
 }
